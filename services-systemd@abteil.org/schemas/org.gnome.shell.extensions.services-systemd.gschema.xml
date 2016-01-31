@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-shell-extensions-services-systemd">
+  <schema path="/org/gnome/shell/extensions/services/" id="org.gnome.shell.extensions.services-systemd">
+    <key type="as" name="systemd">
+        <default>[ ]</default>
+        <summary>Systemd service list</summary>
+        <description>A list of serrvice which are shown</description>
+    </key>
+  </schema>
+</schemalist>
