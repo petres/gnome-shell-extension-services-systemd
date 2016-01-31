@@ -6,5 +6,6 @@
 	"settings-schema": "org.gnome.shell.extensions.services-systemd",
 	"shell-version": [
 		"3.18"
-	]
+	], 
+    "version": 1
 }

@@ -16,18 +16,22 @@ function Services() {
     this.loadConfig();
 
 	this.button = new PanelMenu.Button(0.0);
-	var actor = new St.Icon({
-		icon_name: 'system-run-symbolic',
-		style_class: 'system-status-icon'
-	});
-	this.button.actor.add_actor(actor);
+	
+	let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
+	let icon = new St.Icon({icon_name: 'system-run-symbolic', style_class: 'system-status-icon'});
+	hbox.add_child(icon);
+
+	this.button.actor.add_actor(hbox);
 	this.button.actor.add_style_class_name('panel-status-button');
 
 	this.button.actor.connect('button-press-event', Lang.bind(this, function() {
 		this.refresh();
 	}));
+	//this.refresh();
 
 	Main.panel.addToStatusArea('services', this.button);
+
+	//this.button.menu.actor.show();
 }
 
 Services.prototype = {
@@ -42,15 +46,17 @@ Services.prototype = {
 			item.connect('toggled', function() {
 				switch(service["type"]) {
 					case 'systemd':
-						GLib.spawn_command_line_async('sh -c "pkexec --user root systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service'] + '; exit;"');
-						//GLib.spawn_command_line_async('sudo systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service']);
-						break;
+						//GLib.spawn_command_line_async('sh -c "pkexec --user root systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service'] + '; exit;"');
+						GLib.spawn_command_line_async('sudo systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service']);
 				}
 			});
 		}));
-        item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
+		if(this._entries.length > 0)
+	        this.button.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
         item.connect('activate', Lang.bind(this, this.openSettings));
         this.button.menu.addMenuItem(item);
+        //this.button.menu.actor.show();
 	},
 
     openSettings: function() {

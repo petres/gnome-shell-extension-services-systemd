@@ -14,20 +14,24 @@ const ServicesSystemdSettings = new GObject.Class({
     Extends: Gtk.Grid,
 
     _init : function(params) {
+        // Gtk Grid init
         this.parent(params);
         this.set_orientation(Gtk.Orientation.VERTICAL);
 
+        // Open settings
         this._settings = Convenience.getSettings();
         this._settings.connect('changed', Lang.bind(this, this._refresh));
 
         this._changedPermitted = false;
 
-
-        this.add(new Gtk.Label({ label: '<b>' + "Listed systemd Services:" + '</b>',
+        // Label
+        let treeViewLabel = new Gtk.Label({ label: '<b>' + "Listed systemd Services:" + '</b>',
                                  use_markup: true,
-                                 halign: Gtk.Align.START }));
+                                 halign: Gtk.Align.START })
+        this.add(treeViewLabel);
 
 
+        // TreeView
         this._store = new Gtk.ListStore();
         this._store.set_column_types([GObject.TYPE_STRING, GObject.TYPE_STRING]);
 
@@ -53,7 +57,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
         this.add(this._treeView);
 
-
+        // Delete Toolbar
         let toolbar = new Gtk.Toolbar();
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
         toolbar.halign = 2;
@@ -62,21 +66,28 @@ const ServicesSystemdSettings = new GObject.Class({
         delButton.connect('clicked', Lang.bind(this, this._delete));
         toolbar.add(delButton);
 
+        // Add Grid
         let grid = new Gtk.Grid();
 
-        let labelName = new Gtk.Label({label: "Name: "});
+        //// Label
+        let labelName = new Gtk.Label({label: "Label: "});
+        labelName.halign = 2;
 
         this._displayName = new Gtk.Entry({ hexpand: true,
                                     margin_top: 5 });
         this._displayName.set_placeholder_text("Name in menu");
 
         let labelService = new Gtk.Label({label: "Service: "});
+        labelService.halign = 2;
 
         let [_, out1] = GLib.spawn_command_line_sync('ls /lib/systemd/system/');
         let [_, out2] = GLib.spawn_command_line_sync('ls /etc/systemd/system/');
 
         
-        let options = out1.toString().split("\n").concat(out2.toString().split("\n")).sort()
+        let options = out1.toString().split("\n").concat(out2.toString().split("\n")).sort(
+            function (a, b) {
+                return a.toLowerCase().localeCompare(b.toLowerCase());
+            })
 
 
         this._availableSystemdServices = []
@@ -95,21 +106,18 @@ const ServicesSystemdSettings = new GObject.Class({
             }
         }
 
+        this._systemName = new Gtk.Entry()
+        let completion =  new Gtk.EntryCompletion()
+        this._systemName.set_completion(completion)
+        completion.set_model(sListStore)
 
-        this._systemdCombo = new Gtk.ComboBox({hexpand: false, model: sListStore});
-
-        let renderer = new Gtk.CellRendererText();
-        this._systemdCombo.pack_start(renderer, true);
-        this._systemdCombo.add_attribute(renderer, 'text', 0);
-        //this._systemdCombo.connect('changed', Lang.bind(this, this._onPlacementChange));
-        //this._systemdCombo.set_active(this._settings.get_int("panel-placement"));
-
+        completion.set_text_column(0)
         
         grid.attach(labelName, 1, 1, 1, 1);
         grid.attach_next_to(this._displayName, labelName, 1, 1, 1);
 
         grid.attach(labelService, 1, 2, 1, 1);
-        grid.attach_next_to(this._systemdCombo,labelService, 1, 1, 1);
+        grid.attach_next_to(this._systemName,labelService, 1, 1, 1);
 
         this.add(grid);
 
@@ -131,12 +139,10 @@ const ServicesSystemdSettings = new GObject.Class({
     },
     _add: function() {
         let displayName = this._displayName.text
-        let activeItem = this._systemdCombo.get_active();
+        let serviceName = this._systemName.text
 
-        if (activeItem != -1 && displayName.trim().length > 0) {
-            let serviceName = this._availableSystemdServices[activeItem]
+        if (this._availableSystemdServices.indexOf(serviceName) != -1 && displayName.trim().length > 0) {
             let id = JSON.stringify({"name": displayName, "service": serviceName})
-
             let currentItems = this._settings.get_strv("systemd");
             let index = currentItems.indexOf(id);
             if (index < 0) {
