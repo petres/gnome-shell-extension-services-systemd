@@ -2,10 +2,10 @@
 	"uuid": "services-systemd@abteil.org",
 	"name": "Services Systemd",
 	"url": "https://github.com/petres/gnome-shell-extension-services-systemd",
-	"description": "Toggle (preselected) systemd services on/off from a menu on the top panel",
+	"description": "Toggle systemd services on/off from a menu in the top panel",
 	"settings-schema": "org.gnome.shell.extensions.services-systemd",
 	"shell-version": [
-		"3.18"
+		"3.16", "3.18"
 	], 
-    "version": 1
+    "version": 2
 }
