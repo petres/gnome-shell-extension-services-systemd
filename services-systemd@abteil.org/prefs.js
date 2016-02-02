@@ -37,9 +37,13 @@ const ServicesSystemdSettings = new GObject.Class({
 
         this._treeView = new Gtk.TreeView({ model: this._store,
                                             hexpand: true, vexpand: true });
-        this._treeView.get_selection().set_mode(Gtk.SelectionMode.SINGLE);
+        
+        let selection = this._treeView.get_selection();
+        selection.set_mode(Gtk.SelectionMode.SINGLE);
+        selection.connect ('changed', Lang.bind (this, this._onSelectionChanged));
 
-        let appColumn = new Gtk.TreeViewColumn({ expand: true, sort_column_id: 0,
+
+        let appColumn = new Gtk.TreeViewColumn({ expand: true,
                                                  title: "Label" });
 
         let nameRenderer = new Gtk.CellRendererText;
@@ -47,7 +51,7 @@ const ServicesSystemdSettings = new GObject.Class({
         appColumn.add_attribute(nameRenderer, "text", 0);
         this._treeView.append_column(appColumn);
 
-        let appColumn = new Gtk.TreeViewColumn({ expand: true, sort_column_id: 1,
+        let appColumn = new Gtk.TreeViewColumn({ expand: true,
                                                  title: "Service" });
         
         let nameRenderer = new Gtk.CellRendererText;
@@ -62,9 +66,20 @@ const ServicesSystemdSettings = new GObject.Class({
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
         toolbar.halign = 2;
         this.add(toolbar);
+
+        let upButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_GO_UP });
+        upButton.connect('clicked', Lang.bind(this, this._up));
+        toolbar.add(upButton);
+
+        let downButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_GO_DOWN });
+        downButton.connect('clicked', Lang.bind(this, this._down));
+        toolbar.add(downButton);
+
         let delButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_DELETE });
         delButton.connect('clicked', Lang.bind(this, this._delete));
         toolbar.add(delButton);
+
+        this._selDepButtons = [upButton, downButton, delButton]
 
         // Add Grid
         let grid = new Gtk.Grid();
@@ -136,6 +151,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
         this._changedPermitted = true;
         this._refresh();
+        this._onSelectionChanged();
     },
     _add: function() {
         let displayName = this._displayName.text
@@ -156,6 +172,42 @@ const ServicesSystemdSettings = new GObject.Class({
             }
         }
     },
+    _up: function() {
+        let [any, model, iter] = this._treeView.get_selection().get_selected();
+
+        if (any) {
+            let index = this._settings.get_strv("systemd").indexOf(this._getIdFromIter(iter));
+            this._move(index, index - 1)
+        }
+    },
+    _down: function() {
+        let [any, model, iter] = this._treeView.get_selection().get_selected();
+
+        if (any) {
+            let index = this._settings.get_strv("systemd").indexOf(this._getIdFromIter(iter));
+            this._move(index, index + 1)
+        }
+    },
+    _getIdFromIter: function(iter) {
+        let displayName = this._store.get_value(iter, 0);
+        let serviceName = this._store.get_value(iter, 1);
+        return JSON.stringify({"name": displayName, "service": serviceName});
+    },
+    _move: function(oldIndex, newIndex) {
+        let currentItems = this._settings.get_strv("systemd");
+
+        if (oldIndex < 0 || oldIndex >= currentItems.length ||  
+            newIndex < 0 || newIndex >= currentItems.length)
+            return;
+
+        currentItems.splice(newIndex, 0, currentItems.splice(oldIndex, 1)[0]);
+
+        this._settings.set_strv("systemd", currentItems);
+
+        this._treeView.get_selection().unselect_all();
+        path = Gtk.TreePath.new_from_string(String(newIndex));
+        this._treeView.get_selection().select_path(path); 
+    },
     _delete: function() {
         let [any, model, iter] = this._treeView.get_selection().get_selected();
 
@@ -165,7 +217,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
             let id = JSON.stringify({"name": displayName, "service": serviceName})
 
-            this._changedPermitted = false;
+            //this._changedPermitted = false;
 
             let currentItems = this._settings.get_strv("systemd");
             let index = currentItems.indexOf(id);
@@ -177,10 +229,24 @@ const ServicesSystemdSettings = new GObject.Class({
             this._settings.set_strv("systemd", currentItems);
             
             this._store.remove(iter);
-            this._changedPermitted = true;
+            //this._changedPermitted = true;
         }
     },
+    _onSelectionChanged: function() {
+        let [any, model, iter] = this._treeView.get_selection().get_selected();
+        if (any) {
+            this._selDepButtons.forEach(function(value) {
+                value.set_sensitive(true)
+            });
+        } else {
+            this._selDepButtons.forEach(function(value) {
+                value.set_sensitive(false)
+            });
+        } 
+    },
     _refresh: function() {
+        log("refresh")
+
         if (!this._changedPermitted)
             return;
 
