@@ -47,7 +47,7 @@ Services.prototype = {
 				switch(service["type"]) {
 					case 'systemd':
 						//GLib.spawn_command_line_async('sh -c "pkexec --user root systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service'] + '; exit;"');
-						GLib.spawn_command_line_async('sudo systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service']);
+						GLib.spawn_command_line_async('sh -c "gksudo systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service'] + '; exit;"');
 				}
 			});
 		}));
