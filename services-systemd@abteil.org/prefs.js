@@ -205,8 +205,7 @@ const ServicesSystemdSettings = new GObject.Class({
         this._settings.set_strv("systemd", currentItems);
 
         this._treeView.get_selection().unselect_all();
-        path = Gtk.TreePath.new_from_string(String(newIndex));
-        this._treeView.get_selection().select_path(path); 
+        this._treeView.get_selection().select_path(Gtk.TreePath.new_from_string(String(newIndex))); 
     },
     _delete: function() {
         let [any, model, iter] = this._treeView.get_selection().get_selected();
@@ -245,8 +244,6 @@ const ServicesSystemdSettings = new GObject.Class({
         } 
     },
     _refresh: function() {
-        log("refresh")
-
         if (!this._changedPermitted)
             return;
 
