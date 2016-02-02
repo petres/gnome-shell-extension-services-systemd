@@ -1,6 +1,6 @@
 # Services Systemd
 ## About
-Services Systemd is a [Gnome](https://www.gnome.org/) Shell Extension which allows to start and stop systemd services via the status area in the main menu panel. As there exists all a lot of - in the sense of beeing displayed in the menu - irrelevant systemd services the user can preselect which services are shown. 
+Services Systemd is a [Gnome](https://www.gnome.org/) Shell Extension which allows to start and stop systemd services via a menu in the status area in the main menu panel. As there exists all a lot of irrelevant systemd services - in the sense of beeing displayed in this menu - the user can preselect which services should be shown in the preference dialog of th extension. 
 
 ![Screenshot](https://raw.githubusercontent.com/petres/gnome-shell-extension-services-systemd/master/img/services-systemd.png)
 
@@ -9,4 +9,4 @@ The easiest way to install this extension is via the official [Gnome Shell Exten
 
 
 ## Credits
-Base of this extension was the gnome extension [Services](https://github.com/hjr265/gnome-shell-extension-services). 
+Some parts have been taken from the the gnome extension [Services](https://github.com/hjr265/gnome-shell-extension-services). 
