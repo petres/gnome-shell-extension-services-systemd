@@ -122,6 +122,7 @@ const ServicesSystemdSettings = new GObject.Class({
         }
 
         this._systemName = new Gtk.Entry()
+        this._systemName.set_placeholder_text("Systemd service name");
         let completion =  new Gtk.EntryCompletion()
         this._systemName.set_completion(completion)
         completion.set_model(sListStore)
