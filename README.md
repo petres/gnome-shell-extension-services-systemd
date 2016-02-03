@@ -5,8 +5,20 @@ Services Systemd is a [Gnome](https://www.gnome.org/) Shell Extension which allo
 ![Screenshot](https://raw.githubusercontent.com/petres/gnome-shell-extension-services-systemd/master/img/services-systemd.png)
 
 ## Install
-The easiest way to install this extension is via the official [Gnome Shell Extension](https://extensions.gnome.org) resource page: https://extensions.gnome.org/extension/1034/services-systemd/
 
+### Gnome Shell Extensions Page
+The easiest way to install this extension is via the official [Gnome Shell Extensions](https://extensions.gnome.org) resource page: https://extensions.gnome.org/extension/1034/services-systemd/
+
+### Arch Linux
+For Arch Linux the AUR package [gnome-shell-extension-services-systemd-git](https://aur4.archlinux.org/packages/gnome-shell-extension-services-systemd-git/) is provided. 
+
+## Future
+**Planned additional functionality:**
+* Separators/Groups
+* Other services
 
 ## Credits
-Some parts have been taken from the the gnome extension [Services](https://github.com/hjr265/gnome-shell-extension-services). 
+Some parts have been taken from the the gnome extension [Services](https://github.com/hjr265/gnome-shell-extension-services).
+
+## License
+[GPLv3](http://www.gnu.org/licenses/gpl-3.0.en.html)
