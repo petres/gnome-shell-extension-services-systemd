@@ -9,7 +9,6 @@ const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const Util = imports.misc.util;
 
-
 function Services() {
     this._settings = Convenience.getSettings();
     this._settings.connect('changed', Lang.bind(this, this.loadConfig));
@@ -27,11 +26,8 @@ function Services() {
 	this.button.actor.connect('button-press-event', Lang.bind(this, function() {
 		this.refresh();
 	}));
-	//this.refresh();
-
 	Main.panel.addToStatusArea('services', this.button);
-
-	//this.button.menu.actor.show();
+	this.refresh();
 }
 
 Services.prototype = {
@@ -54,16 +50,13 @@ Services.prototype = {
 		if(this._entries.length > 0)
 	        this.button.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
-        item.connect('activate', Lang.bind(this, this.openSettings));
+        item.connect('activate', Lang.bind(this, function() {
+	        Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
+	        return true;
+	    }));
         this.button.menu.addMenuItem(item);
-        //this.button.menu.actor.show();
+        return true;
 	},
-
-    openSettings: function() {
-        this.button.menu.actor.hide();
-        Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
-        return 0;
-    },
 
     loadConfig: function() {
         let entries = this._settings.get_strv("systemd");
