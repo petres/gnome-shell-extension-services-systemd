@@ -52,7 +52,7 @@ Services.prototype = {
         let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
         item.connect('activate', Lang.bind(this, function() {
 	        Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
-	        return true;
+	        this.button.menu.close();
 	    }));
         this.button.menu.addMenuItem(item);
         return true;

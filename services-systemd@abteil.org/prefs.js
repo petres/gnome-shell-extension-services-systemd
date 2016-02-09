@@ -8,6 +8,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 
+const systemdFolders = ['/lib/systemd/system/', '/etc/systemd/system/', '/usr/lib/systemd/user/'];
 
 const ServicesSystemdSettings = new GObject.Class({
     Name: 'Services-Systemd-Settings',
@@ -95,30 +96,14 @@ const ServicesSystemdSettings = new GObject.Class({
         let labelService = new Gtk.Label({label: "Service: "});
         labelService.halign = 2;
 
-        let [_, out1] = GLib.spawn_command_line_sync('ls /lib/systemd/system/');
-        let [_, out2] = GLib.spawn_command_line_sync('ls /etc/systemd/system/');
-
-        
-        let options = out1.toString().split("\n").concat(out2.toString().split("\n")).sort(
-            function (a, b) {
-                return a.toLowerCase().localeCompare(b.toLowerCase());
-            })
-
-
-        this._availableSystemdServices = []
-
+        this._availableSystemdServices = this._getSystemdServicesList()
 
         let sListStore = new Gtk.ListStore();
         sListStore.set_column_types([GObject.TYPE_STRING, GObject.TYPE_INT]);
 
-        for (let i = 0; i < options.length; i++ ) {
-            let option = options[i];
-            let serviceName = ".service"
-            if (option.substr(-serviceName.length) === serviceName) {
-                let iter = sListStore.append();
-                this._availableSystemdServices.push(option)
-                sListStore.set (iter, [0], [option]);
-            }
+        for (let i = 0; i < this._availableSystemdServices.length; i++ ) {
+            let iter = sListStore.append();
+            sListStore.set (iter, [0], [this._availableSystemdServices[i]]);
         }
 
         this._systemName = new Gtk.Entry()
@@ -154,23 +139,88 @@ const ServicesSystemdSettings = new GObject.Class({
         this._refresh();
         this._onSelectionChanged();
     },
+    _getSystemdServicesList: function() {
+        let allUnfiltered = []
+        for (let i = 0; i < systemdFolders.length; i++ ) {
+            let [_, out, err, stat] = GLib.spawn_command_line_sync('ls ' + systemdFolders[i]);
+            if (stat == 0) {
+                allUnfiltered = allUnfiltered.concat(out.toString().split("\n"))
+            }
+        }
+        
+        let serviceName = ".service"
+        let allFiltered = []
+        for (let i = 0; i < allUnfiltered.length; i++ ) {
+            if (allUnfiltered[i].substr(-serviceName.length) === serviceName)
+                allFiltered.push(allUnfiltered[i])
+        }
+
+        return allFiltered.sort(
+            function (a, b) {
+                return a.toLowerCase().localeCompare(b.toLowerCase());
+            })
+    },
     _add: function() {
         let displayName = this._displayName.text
         let serviceName = this._systemName.text
 
-        if (this._availableSystemdServices.indexOf(serviceName) != -1 && displayName.trim().length > 0) {
-            let id = JSON.stringify({"name": displayName, "service": serviceName})
-            let currentItems = this._settings.get_strv("systemd");
-            let index = currentItems.indexOf(id);
-            if (index < 0) {
-                this._changedPermitted = false;
-                currentItems.push(id);
-                this._settings.set_strv("systemd", currentItems);
+        if (displayName.trim().length > 0 && serviceName.trim().length > 0 ) {
+            if (this._availableSystemdServices.indexOf(serviceName) == -1) {
+                // this._messageDialog = new Gtk.MessageDialog ({
+                //     title: "Warning",
+                //     modal: true,
+                //     buttons: Gtk.ButtonsType.YES_NO,
+                //     message_type: Gtk.MessageType.QUESTION,
+                //     text: "Service not found, maybe specified in an unusual directory. Continue?" 
+                // });
+                // this._messageDialog.connect ('response', Lang.bind(this, function(sender, response) {
+                //     this._messageDialog.close();
+                //     if (response == Gtk.ResponseType.NO)
+                //         return
+                // }));
+                // this._messageDialog.show();
+                // log('after show')
+                this._messageDialog = new Gtk.MessageDialog ({
+                    title: "Warning",
+                    modal: true,
+                    buttons: Gtk.ButtonsType.OK,
+                    message_type: Gtk.MessageType.WARNING,
+                    text: "Service does not exist." 
+                });
 
-                this._store.set(this._store.append(), [0, 1],
-                                [displayName, serviceName]);
-                this._changedPermitted = true;
+                this._messageDialog.connect ('response', Lang.bind(this, function() {
+                    this._messageDialog.close();
+                }));
+                this._messageDialog.show();
+            } else {
+                let id = JSON.stringify({"name": displayName, "service": serviceName})
+                let currentItems = this._settings.get_strv("systemd");
+                let index = currentItems.indexOf(id);
+                if (index < 0) {
+                    this._changedPermitted = false;
+                    currentItems.push(id);
+                    this._settings.set_strv("systemd", currentItems);
+
+                    this._store.set(this._store.append(), [0, 1],
+                                    [displayName, serviceName]);
+                    this._changedPermitted = true;
+                }
             }
+            
+        } else {
+            this._messageDialog = new Gtk.MessageDialog ({
+                //parent: this.get_toplevel(), 
+                title: "Warning",
+                modal: true,
+                buttons: Gtk.ButtonsType.OK,
+                message_type: Gtk.MessageType.WARNING,
+                text: "No label and/or service specified." 
+            });
+
+            this._messageDialog.connect ('response', Lang.bind(this, function() {
+                this._messageDialog.close();
+            }));
+            this._messageDialog.show();
         }
     },
     _up: function() {
@@ -274,7 +324,6 @@ const ServicesSystemdSettings = new GObject.Class({
 });
 
 function init() {
-	
 }
 
 function buildPrefsWidget() {
