@@ -2,10 +2,9 @@
 	"uuid": "services-systemd@abteil.org",
 	"name": "Services Systemd",
 	"url": "https://github.com/petres/gnome-shell-extension-services-systemd",
-	"description": "Toggle systemd services on/off from a menu in the top panel",
+	"description": "Toggle systemd services on/off from a popup menu in the top gnome panel. Can be used to start services like apache2, mysql, postgres. It uses pkexec to run sytemctl as root. If you want to start services without entering a password you have to polkit policy file. An example policy file can be found in repo.",
 	"settings-schema": "org.gnome.shell.extensions.services-systemd",
 	"shell-version": [
-		"3.16", "3.18"
-	], 
-    "version": 2
+		"3.18"
+	]
 }
