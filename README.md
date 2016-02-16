@@ -12,6 +12,18 @@ The easiest way to install this extension is via the official [Gnome Shell Exten
 ### Arch Linux
 For Arch Linux the AUR package [gnome-shell-extension-services-systemd-git](https://aur4.archlinux.org/packages/gnome-shell-extension-services-systemd-git/) is provided. 
 
+## Authorization
+
+In the recent versions of this extension the authorization is done by `pkexec` (before via `gksu`). Therefore if you would like to be able to start systemd services without getting prompted for a password, you will have to configure a polkit policy. The policy file [org.freedesktop.policykit.pkexec.systemctl.policy](https://github.com/petres/gnome-shell-extension-services-systemd/blob/master/org.freedesktop.policykit.pkexec.systemctl.policy) would allow the execution of `systemctl [start|stop]` without a password confirmation. Simple copy the file in your polkit policy folder (usually: `/usr/share/polkit-1/actions`).
+
+
+### Gnome Shell Extensions Page
+The easiest way to install this extension is via the official [Gnome Shell Extensions](https://extensions.gnome.org) resource page: https://extensions.gnome.org/extension/1034/services-systemd/
+
+### Arch Linux
+For Arch Linux the AUR package [gnome-shell-extension-services-systemd-git](https://aur4.archlinux.org/packages/gnome-shell-extension-services-systemd-git/) is provided.
+
+
 ## Future
 **Planned additional functionality:**
 * Separators/Groups
