@@ -8,7 +8,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 
-const systemdFolders = ['/lib/systemd/system/', '/etc/systemd/system/', '/usr/lib/systemd/user/'];
+const systemdFolders = ['/lib/systemd/system/', '/etc/systemd/system/', '/usr/lib/systemd/user/', '/run/systemd/generator.late/'];
 
 const ServicesSystemdSettings = new GObject.Class({
     Name: 'Services-Systemd-Settings',
