@@ -8,7 +8,6 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 
-const systemdFolders = ['/lib/systemd/system/', '/etc/systemd/system/', '/usr/lib/systemd/user/', '/run/systemd/generator.late/'];
 
 const ServicesSystemdSettings = new GObject.Class({
     Name: 'Services-Systemd-Settings',
@@ -34,7 +33,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
         // TreeView
         this._store = new Gtk.ListStore();
-        this._store.set_column_types([GObject.TYPE_STRING, GObject.TYPE_STRING]);
+        this._store.set_column_types([GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING]);
 
         this._treeView = new Gtk.TreeView({ model: this._store,
                                             hexpand: true, vexpand: true });
@@ -58,6 +57,14 @@ const ServicesSystemdSettings = new GObject.Class({
         let nameRenderer = new Gtk.CellRendererText;
         appColumn.pack_start(nameRenderer, true);
         appColumn.add_attribute(nameRenderer, "text", 1);
+        this._treeView.append_column(appColumn);
+
+        let appColumn = new Gtk.TreeViewColumn({ expand: true,
+                                                 title: "Type" });
+        
+        let nameRenderer = new Gtk.CellRendererText;
+        appColumn.pack_start(nameRenderer, true);
+        appColumn.add_attribute(nameRenderer, "text", 2);
         this._treeView.append_column(appColumn);
 
         this.add(this._treeView);
@@ -96,14 +103,18 @@ const ServicesSystemdSettings = new GObject.Class({
         let labelService = new Gtk.Label({label: "Service: "});
         labelService.halign = 2;
 
-        this._availableSystemdServices = this._getSystemdServicesList()
+        this._availableSystemdServices = {
+            'system': this._getSystemdServicesList("system"),
+            'user': this._getSystemdServicesList("user"),
+        }
+        this._availableSystemdServices['all'] = this._availableSystemdServices['system'].concat(this._availableSystemdServices['user'])
+
 
         let sListStore = new Gtk.ListStore();
         sListStore.set_column_types([GObject.TYPE_STRING, GObject.TYPE_INT]);
 
-        for (let i = 0; i < this._availableSystemdServices.length; i++ ) {
-            let iter = sListStore.append();
-            sListStore.set (iter, [0], [this._availableSystemdServices[i]]);
+        for (let i in this._availableSystemdServices['all']) {
+            sListStore.set (sListStore.append(), [0], [this._availableSystemdServices['all'][i]]);
         }
 
         this._systemName = new Gtk.Entry()
@@ -139,47 +150,29 @@ const ServicesSystemdSettings = new GObject.Class({
         this._refresh();
         this._onSelectionChanged();
     },
-    _getSystemdServicesList: function() {
-        let allUnfiltered = []
-        for (let i = 0; i < systemdFolders.length; i++ ) {
-            let [_, out, err, stat] = GLib.spawn_command_line_sync('ls ' + systemdFolders[i]);
-            if (stat == 0) {
-                allUnfiltered = allUnfiltered.concat(out.toString().split("\n"))
-            }
-        }
-        
-        let serviceName = ".service"
-        let allFiltered = []
-        for (let i = 0; i < allUnfiltered.length; i++ ) {
-            if (allUnfiltered[i].substr(-serviceName.length) === serviceName)
-                allFiltered.push(allUnfiltered[i])
-        }
-
+    _getSystemdServicesList: function(type) {
+        let [_, out, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-unit-files --type=service | tail -n +2 | head -n -2 | awk \'{print $1}\'"');
+        let allFiltered = out.toString().split("\n");
         return allFiltered.sort(
             function (a, b) {
                 return a.toLowerCase().localeCompare(b.toLowerCase());
             })
+    },
+    _getTypeOfService: function(service) {
+        let type = "undefined"
+        if (this._availableSystemdServices['system'].indexOf(service) != -1)
+            type = "system"
+        else if (this._availableSystemdServices['user'].indexOf(service) != -1)
+            type = "user"
+        return type
     },
     _add: function() {
         let displayName = this._displayName.text
         let serviceName = this._systemName.text
 
         if (displayName.trim().length > 0 && serviceName.trim().length > 0 ) {
-            if (this._availableSystemdServices.indexOf(serviceName) == -1) {
-                // this._messageDialog = new Gtk.MessageDialog ({
-                //     title: "Warning",
-                //     modal: true,
-                //     buttons: Gtk.ButtonsType.YES_NO,
-                //     message_type: Gtk.MessageType.QUESTION,
-                //     text: "Service not found, maybe specified in an unusual directory. Continue?" 
-                // });
-                // this._messageDialog.connect ('response', Lang.bind(this, function(sender, response) {
-                //     this._messageDialog.close();
-                //     if (response == Gtk.ResponseType.NO)
-                //         return
-                // }));
-                // this._messageDialog.show();
-                // log('after show')
+            let type = this._getTypeOfService(serviceName)
+            if (type == "undefined") {
                 this._messageDialog = new Gtk.MessageDialog ({
                     title: "Warning",
                     modal: true,
@@ -187,24 +180,23 @@ const ServicesSystemdSettings = new GObject.Class({
                     message_type: Gtk.MessageType.WARNING,
                     text: "Service does not exist." 
                 });
-
-                this._messageDialog.connect ('response', Lang.bind(this, function() {
+                this._messageDialog.connect('response', Lang.bind(this, function() {
                     this._messageDialog.close();
                 }));
                 this._messageDialog.show();
             } else {
-                let id = JSON.stringify({"name": displayName, "service": serviceName})
+                let id = JSON.stringify({"name": displayName, "service": serviceName, "type": type})
                 let currentItems = this._settings.get_strv("systemd");
                 let index = currentItems.indexOf(id);
                 if (index < 0) {
                     this._changedPermitted = false;
                     currentItems.push(id);
                     this._settings.set_strv("systemd", currentItems);
-
-                    this._store.set(this._store.append(), [0, 1],
-                                    [displayName, serviceName]);
+                    this._store.set(this._store.append(), [0, 1, 2], [displayName, serviceName, type]);
                     this._changedPermitted = true;
                 }
+                this._displayName.text = ""
+                this._systemName.text = ""
             }
             
         } else {
@@ -264,8 +256,9 @@ const ServicesSystemdSettings = new GObject.Class({
         if (any) {
             let displayName = this._store.get_value(iter, 0);
             let serviceName = this._store.get_value(iter, 1);
+            let type = this._store.get_value(iter, 2);
 
-            let id = JSON.stringify({"name": displayName, "service": serviceName})
+            let id = JSON.stringify({"name": displayName, "service": serviceName, "type": type})
 
             //this._changedPermitted = false;
 
@@ -305,19 +298,22 @@ const ServicesSystemdSettings = new GObject.Class({
 
         for (let i = 0; i < currentItems.length; i++) {
             let entry = JSON.parse(currentItems[i]);
-            if (this._availableSystemdServices.indexOf(entry["service"]) < 0)
+            if (this._availableSystemdServices["all"].indexOf(entry["service"]) < 0)
                 continue;
 
-            validItems.push(currentItems[i]);
+            if(!("type" in entry))
+                entry["type"] = this._getTypeOfService(entry["service"])
+
+            validItems.push(JSON.stringify(entry));
 
             let iter = this._store.append();
             this._store.set(iter,
-                            [0, 1],
-                            [entry["name"], entry["service"]]);
+                            [0, 1, 2],
+                            [entry["name"], entry["service"], entry["type"]]);
         }
 
         this._changedPermitted = false
-        if (validItems.length != currentItems.length)
+        //if (validItems.length != currentItems.length)
             this._settings.set_strv("systemd", validItems);
         this._changedPermitted = true
     }

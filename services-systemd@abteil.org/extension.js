@@ -43,14 +43,16 @@ const ServicesManager = new Lang.Class({
 		this.menu.removeAll();
 		this._entries.forEach(Lang.bind(this, function(service) {
 			let active = false;
-			let [_, out, err, stat] = GLib.spawn_command_line_sync('systemctl is-active ' + service['service']);
+			let [_, out, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + service['type'] + ' is-active ' + service['service'] + '"');
 			let active = (stat == 0);
 			let item = new PopupMenu.PopupSwitchMenuItem(service['name'], active);
 			this.menu.addMenuItem(item);
 			item.connect('toggled', function() {
 				switch(service["type"]) {
-					case 'systemd':
-						GLib.spawn_command_line_async('sh -c "pkexec --user root systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service'] + '; exit;"');
+					case 'system':
+						GLib.spawn_command_line_async('sh -c "pkexec --user root systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service'] + ' --system; exit;"');
+					case 'user':
+						GLib.spawn_command_line_async('sh -c "systemctl --user ' + (active ? 'stop' : 'start') + ' ' + service['service'] + '; exit;"');
 				}
 			});
 		}));
@@ -70,7 +72,8 @@ const ServicesManager = new Lang.Class({
         this._entries = []
         for (let i = 0; i < entries.length; i++) {
 	        let entry = JSON.parse(entries[i]);
-	        entry["type"] = "systemd"
+	        if (!("type" in entry))
+	        	entry["type"] = "system"
 	        this._entries.push(entry);
 	    }
     }
