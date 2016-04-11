@@ -234,7 +234,8 @@ const ServicesSystemdSettings = new GObject.Class({
     _getIdFromIter: function(iter) {
         let displayName = this._store.get_value(iter, 0);
         let serviceName = this._store.get_value(iter, 1);
-        return JSON.stringify({"name": displayName, "service": serviceName});
+        let type = this._store.get_value(iter, 2);
+        return JSON.stringify({"name": displayName, "service": serviceName, "type": type});
     },
     _move: function(oldIndex, newIndex) {
         let currentItems = this._settings.get_strv("systemd");
@@ -254,16 +255,10 @@ const ServicesSystemdSettings = new GObject.Class({
         let [any, model, iter] = this._treeView.get_selection().get_selected();
 
         if (any) {
-            let displayName = this._store.get_value(iter, 0);
-            let serviceName = this._store.get_value(iter, 1);
-            let type = this._store.get_value(iter, 2);
-
-            let id = JSON.stringify({"name": displayName, "service": serviceName, "type": type})
-
             //this._changedPermitted = false;
 
             let currentItems = this._settings.get_strv("systemd");
-            let index = currentItems.indexOf(id);
+            let index = currentItems.indexOf(this._getIdFromIter(iter));
 
             if (index < 0)
                 return;
