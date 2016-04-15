@@ -5,6 +5,6 @@
 	"description": "Toggle systemd services on/off from a popup menu in the top gnome panel. Can be used to start services like apache2, mysql, postgres. It uses `pkexec' to run `sytemctl'. If you want to start services without entering a password you have to polkit policy file. An example policy file can be found in the github repository.",
 	"settings-schema": "org.gnome.shell.extensions.services-systemd",
 	"shell-version": [
-		"3.20", "3.18", "3.16"
+		"3.20", "3.18", "3.16", "3.14"
 	]
 }
