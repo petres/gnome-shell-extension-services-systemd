@@ -38,7 +38,6 @@ const ServicesManager = new Lang.Class({
 		
 		this._refresh();
 	},
-
 	_refresh: function() {
 		this.menu.removeAll();
 		this._entries.forEach(Lang.bind(this, function(service) {
@@ -66,7 +65,6 @@ const ServicesManager = new Lang.Class({
         this.menu.addMenuItem(item);
         return true;
 	},
-
     _loadConfig: function() {
         let entries = this._settings.get_strv("systemd");
         this._entries = []

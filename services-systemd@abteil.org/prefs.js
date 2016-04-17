@@ -17,6 +17,7 @@ const ServicesSystemdSettings = new GObject.Class({
         // Gtk Grid init
         this.parent(params);
         this.set_orientation(Gtk.Orientation.VERTICAL);
+        this.margin = 20;
 
         // Open settings
         this._settings = Convenience.getSettings();
@@ -109,13 +110,11 @@ const ServicesSystemdSettings = new GObject.Class({
         }
         this._availableSystemdServices['all'] = this._availableSystemdServices['system'].concat(this._availableSystemdServices['user'])
 
-
         let sListStore = new Gtk.ListStore();
         sListStore.set_column_types([GObject.TYPE_STRING, GObject.TYPE_INT]);
 
-        for (let i in this._availableSystemdServices['all']) {
+        for (let i in this._availableSystemdServices['all'])
             sListStore.set (sListStore.append(), [0], [this._availableSystemdServices['all'][i]]);
-        }
 
         this._systemName = new Gtk.Entry()
         this._systemName.set_placeholder_text("Systemd service name");
@@ -132,7 +131,6 @@ const ServicesSystemdSettings = new GObject.Class({
         grid.attach_next_to(this._systemName,labelService, 1, 1, 1);
 
         this.add(grid);
-
 
         let toolbar = new Gtk.Toolbar();
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
@@ -165,6 +163,12 @@ const ServicesSystemdSettings = new GObject.Class({
         else if (this._availableSystemdServices['user'].indexOf(service) != -1)
             type = "user"
         return type
+    },
+    _getIdFromIter: function(iter) {
+        let displayName = this._store.get_value(iter, 0);
+        let serviceName = this._store.get_value(iter, 1);
+        let type = this._store.get_value(iter, 2);
+        return JSON.stringify({"name": displayName, "service": serviceName, "type": type});
     },
     _add: function() {
         let displayName = this._displayName.text
@@ -231,12 +235,6 @@ const ServicesSystemdSettings = new GObject.Class({
             this._move(index, index + 1)
         }
     },
-    _getIdFromIter: function(iter) {
-        let displayName = this._store.get_value(iter, 0);
-        let serviceName = this._store.get_value(iter, 1);
-        let type = this._store.get_value(iter, 2);
-        return JSON.stringify({"name": displayName, "service": serviceName, "type": type});
-    },
     _move: function(oldIndex, newIndex) {
         let currentItems = this._settings.get_strv("systemd");
 
@@ -255,8 +253,6 @@ const ServicesSystemdSettings = new GObject.Class({
         let [any, model, iter] = this._treeView.get_selection().get_selected();
 
         if (any) {
-            //this._changedPermitted = false;
-
             let currentItems = this._settings.get_strv("systemd");
             let index = currentItems.indexOf(this._getIdFromIter(iter));
 
@@ -267,7 +263,6 @@ const ServicesSystemdSettings = new GObject.Class({
             this._settings.set_strv("systemd", currentItems);
             
             this._store.remove(iter);
-            //this._changedPermitted = true;
         }
     },
     _onSelectionChanged: function() {
@@ -293,9 +288,11 @@ const ServicesSystemdSettings = new GObject.Class({
 
         for (let i = 0; i < currentItems.length; i++) {
             let entry = JSON.parse(currentItems[i]);
+            // REMOVE NOT EXISTING ENTRIES
             if (this._availableSystemdServices["all"].indexOf(entry["service"]) < 0)
                 continue;
 
+            // COMPABILITY
             if(!("type" in entry))
                 entry["type"] = this._getTypeOfService(entry["service"])
 
@@ -308,8 +305,7 @@ const ServicesSystemdSettings = new GObject.Class({
         }
 
         this._changedPermitted = false
-        //if (validItems.length != currentItems.length)
-            this._settings.set_strv("systemd", validItems);
+        this._settings.set_strv("systemd", validItems);
         this._changedPermitted = true
     }
 });
