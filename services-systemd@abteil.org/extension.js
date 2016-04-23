@@ -8,6 +8,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const Util = imports.misc.util;
+const PopupServiceItem = Me.imports.popupServiceItem.PopupServiceItem;
 
 const ServicesManager = new Lang.Class({
     Name: 'ServicesManager',
@@ -38,25 +39,44 @@ const ServicesManager = new Lang.Class({
 		
 		this._refresh();
 	},
+	_getCommand: function(service, action, type) {
+		let command = "systemctl"
+
+		command += " " + action
+		command += " " + service
+		command += " --" + type
+		if (type == "system" && action != 'is-active')
+			command = "pkexec --user root " + command
+
+		return 'sh -c "' + command + '; exit;"'
+	},
 	_refresh: function() {
 		this.menu.removeAll();
 		this._entries.forEach(Lang.bind(this, function(service) {
 			let active = false;
-			let [_, out, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + service['type'] + ' is-active ' + service['service'] + '"');
+			let [_, out, err, stat] = GLib.spawn_command_line_sync(
+				this._getCommand(service['service'], 'is-active', service["type"]));
+			
 			let active = (stat == 0);
-			let item = new PopupMenu.PopupSwitchMenuItem(service['name'], active);
-			this.menu.addMenuItem(item);
-			item.connect('toggled', function() {
-				switch(service["type"]) {
-					case 'system':
-						GLib.spawn_command_line_async('sh -c "pkexec --user root systemctl ' + (active ? 'stop' : 'start') + ' ' + service['service'] + ' --system; exit;"');
-					case 'user':
-						GLib.spawn_command_line_async('sh -c "systemctl --user ' + (active ? 'stop' : 'start') + ' ' + service['service'] + '; exit;"');
-				}
-			});
+
+			let serviceItem = new PopupServiceItem(service['name'], active);
+            this.menu.addMenuItem(serviceItem);
+
+			serviceItem.connect('toggled', Lang.bind(this, function() {
+				GLib.spawn_command_line_async(
+					this._getCommand(service['service'], (active ? 'stop' : 'start'), service["type"]));
+			}));
+
+			serviceItem.refreshButton.connect('clicked', Lang.bind(this, function() {
+				GLib.spawn_command_line_async(
+					this._getCommand(service['service'], 'restart', service["type"]));
+				this.menu.close();
+			}));
 		}));
+
 		if(this._entries.length > 0)
 	        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
         let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
         item.connect('activate', Lang.bind(this, function() {
 	        Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
