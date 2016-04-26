@@ -2,7 +2,7 @@
 <!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
 "http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
 <policyconfig>
-  <vendor>Start/Stop Services Systemd</vendor>
+  <vendor>Start/Start/Restart Services Systemd</vendor>
   <vendor_url>http://www.freedesktop.org/wiki/Software/polkit/</vendor_url>
   <action id="org.freedesktop.policykit.pkexec.systemctl.start">
     <description>Start systemd service</description>
@@ -27,5 +27,17 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/systemctl</annotate>
     <annotate key="org.freedesktop.policykit.exec.argv1">stop</annotate>
+  </action>
+  <action id="org.freedesktop.policykit.pkexec.systemctl.restart">
+    <description>Restart systemd service</description>
+    <message>Authentication is required to restart a systemd service</message>
+    <icon_name>system-run-symbolic</icon_name>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/systemctl</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">restart</annotate>
   </action>
 </policyconfig>
