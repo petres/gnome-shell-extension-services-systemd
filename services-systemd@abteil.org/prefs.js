@@ -149,8 +149,10 @@ const ServicesSystemdSettings = new GObject.Class({
         this._onSelectionChanged();
     },
     _getSystemdServicesList: function(type) {
-        let [_, out, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-units --type=service --no-legend | awk \'{print $1}\'"');
+        let [_, out, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-unit-files --type=service --no-legend | awk \'{print $1}\'"');
         let allFiltered = out.toString().split("\n");
+        let [_, out2, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-units --type=service --no-legend | awk \'{print $1}\'"');
+        allFiltered = allFiltered.concat(out2.toString().split("\n"));
         return allFiltered.sort(
             function (a, b) {
                 return a.toLowerCase().localeCompare(b.toLowerCase());
