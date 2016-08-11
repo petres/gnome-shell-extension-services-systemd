@@ -74,15 +74,17 @@ const ServicesManager = new Lang.Class({
 			}));
 		}));
 
-		if(this._entries.length > 0)
-	        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        
-        let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
-        item.connect('activate', Lang.bind(this, function() {
-	        Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
-	        this.menu.close();
-	    }));
-        this.menu.addMenuItem(item);
+		if(this._settings.get_boolean('show-add')) {
+			if(this._entries.length > 0)
+		        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+	        
+	        let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
+	        item.connect('activate', Lang.bind(this, function() {
+		        Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
+		        this.menu.close();
+		    }));
+	        this.menu.addMenuItem(item);
+        }
         return true;
 	},
     _loadConfig: function() {

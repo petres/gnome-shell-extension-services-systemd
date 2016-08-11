@@ -11,25 +11,63 @@ const Convenience = Me.imports.convenience;
 
 const ServicesSystemdSettings = new GObject.Class({
     Name: 'Services-Systemd-Settings',
-    Extends: Gtk.Grid,
+    Extends: Gtk.Notebook,
 
     _init : function(params) {
-        // Gtk Grid init
-        this.parent(params);
-        this.set_orientation(Gtk.Orientation.VERTICAL);
-        this.margin = 20;
-
-        // Open settings
+        /*** Open Settings ***********************************************************************/
         this._settings = Convenience.getSettings();
         this._settings.connect('changed', Lang.bind(this, this._refresh));
 
         this._changedPermitted = false;
+        /*****************************************************************************************/
 
+
+
+        /*** GUI: General ************************************************************************/
+        this.parent(params);
+        this.set_tab_pos(Gtk.PositionType.TOP);
+
+        let servicesPage = new Gtk.Grid()
+        servicesPage.set_orientation(Gtk.Orientation.VERTICAL);
+        servicesPage.margin = 20;
+
+        let otherPage = new Gtk.Grid()
+        otherPage.set_orientation(Gtk.Orientation.VERTICAL);
+        otherPage.margin = 20;
+
+        //this.insert_page(servicesPage, new Gtk.Label("test"), 0)
+        this.append_page(servicesPage, new Gtk.Label({label: "Services" }))
+        this.append_page(otherPage, new Gtk.Label({label: "Other" }))
+        /*****************************************************************************************/
+
+
+
+        /*** GUI: Other Settings *****************************************************************/
+        let showAddLabel = new Gtk.Label({
+                label:      "Show add services: ",
+                xalign:     0,
+                hexpand:    true
+            });
+
+        this._showAddCheckbox = new Gtk.Switch();
+        this._showAddCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
+            this._changedPermitted = false;
+            this._settings.set_boolean('show-add', button.active);
+            this._changedPermitted = true;
+        }));
+
+        otherPage.attach(showAddLabel, 1, 2, 1, 1);
+        otherPage.attach_next_to(this._showAddCheckbox, showAddLabel, 1, 1, 1);
+        /*****************************************************************************************/
+
+
+
+        /*** GUI: Services Settings **************************************************************/
         // Label
         let treeViewLabel = new Gtk.Label({ label: '<b>' + "Listed systemd Services:" + '</b>',
                                  use_markup: true,
                                  halign: Gtk.Align.START })
-        this.add(treeViewLabel);
+        servicesPage.add(treeViewLabel);
 
 
         // TreeView
@@ -68,13 +106,13 @@ const ServicesSystemdSettings = new GObject.Class({
         appColumn.add_attribute(nameRenderer, "text", 2);
         this._treeView.append_column(appColumn);
 
-        this.add(this._treeView);
+        servicesPage.add(this._treeView);
 
         // Delete Toolbar
         let toolbar = new Gtk.Toolbar();
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
         toolbar.halign = 2;
-        this.add(toolbar);
+        servicesPage.add(toolbar);
 
         let upButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_GO_UP });
         upButton.connect('clicked', Lang.bind(this, this._up));
@@ -130,12 +168,12 @@ const ServicesSystemdSettings = new GObject.Class({
         grid.attach(labelService, 1, 2, 1, 1);
         grid.attach_next_to(this._systemName,labelService, 1, 1, 1);
 
-        this.add(grid);
+        servicesPage.add(grid);
 
         let toolbar = new Gtk.Toolbar();
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
         toolbar.halign = 2;
-        this.add(toolbar);
+        servicesPage.add(toolbar);
 
         let addButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_ADD,
                                              label: "Add",
@@ -143,6 +181,9 @@ const ServicesSystemdSettings = new GObject.Class({
 
         addButton.connect('clicked', Lang.bind(this, this._add));
         toolbar.add(addButton);
+        /*****************************************************************************************/
+
+        
 
         this._changedPermitted = true;
         this._refresh();
@@ -284,6 +325,7 @@ const ServicesSystemdSettings = new GObject.Class({
             return;
 
         this._store.clear();
+        this._showAddCheckbox.set_active(this._settings.get_boolean('show-add'))
 
         let currentItems = this._settings.get_strv("systemd");
         let validItems = [ ];

@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-shell-extensions-services-systemd">
-  <schema path="/org/gnome/shell/extensions/services/" id="org.gnome.shell.extensions.services-systemd">
-    <key type="as" name="systemd">
-        <default>[ ]</default>
-        <summary>Systemd service list</summary>
-        <description>A list of serrvice which are shown</description>
-    </key>
-  </schema>
+    <schema path="/org/gnome/shell/extensions/services/" id="org.gnome.shell.extensions.services-systemd">
+        <key type="as" name="systemd">
+            <default>[ ]</default>
+            <summary>Systemd service list</summary>
+            <description>A list of serrvice which are shown</description>
+        </key>
+        <key type="b" name="show-add">
+            <default>true</default>
+            <summary>Show the add services button</summary>
+            <description>Whether to show the add services button as last entry in the  extensions list.</description>
+        </key>
+    </schema>
 </schemalist>
