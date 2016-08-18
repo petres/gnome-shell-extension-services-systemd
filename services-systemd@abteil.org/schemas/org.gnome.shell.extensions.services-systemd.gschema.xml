@@ -9,7 +9,12 @@
         <key type="b" name="show-add">
             <default>true</default>
             <summary>Show the add services button</summary>
-            <description>Whether to show the add services button as last entry in the  extensions list.</description>
+            <description>Whether to show the add services button as last entry in the extensions list.</description>
+        </key>
+        <key type="b" name="show-restart">
+            <default>true</default>
+            <summary>Show the restart button for each service</summary>
+            <description>Whether to show the restart button for each service.</description>
         </key>
     </schema>
 </schemalist>

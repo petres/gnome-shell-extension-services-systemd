@@ -13,16 +13,18 @@ const PopupServiceItem = new Lang.Class({
     Extends: PopupMenu.PopupSwitchMenuItem,
 
     _init: function(text, active, params) {
-        this.parent(text, active, params);
+        this.parent(text, active);
 
-        this.refreshButton = new St.Button({ x_align: 1,
-                                             reactive: true,
-                                             can_focus: true,
-                                             track_hover: true,
-                                             accessible_name: 'restart',
-                                             style_class: 'system-menu-action services-systemd-button-reload' });
+        if (params.restartButton) {
+            this.restartButton = new St.Button({ x_align: 1,
+                                                 reactive: true,
+                                                 can_focus: true,
+                                                 track_hover: true,
+                                                 accessible_name: 'restart',
+                                                 style_class: 'system-menu-action services-systemd-button-reload' });
 
-        this.refreshButton.child = new St.Icon({ icon_name: 'view-refresh-symbolic' });
-        this.actor.add(this.refreshButton, { expand: false, x_align: St.Align.END });
+            this.restartButton.child = new St.Icon({ icon_name: 'view-refresh-symbolic' });
+            this.actor.add(this.restartButton, { expand: false, x_align: St.Align.END });
+        }
     }
 });

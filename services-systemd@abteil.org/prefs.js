@@ -34,6 +34,7 @@ const ServicesSystemdSettings = new GObject.Class({
         let otherPage = new Gtk.Grid()
         otherPage.set_orientation(Gtk.Orientation.VERTICAL);
         otherPage.margin = 20;
+        otherPage.set_row_spacing(10);
 
         //this.insert_page(servicesPage, new Gtk.Label("test"), 0)
         this.append_page(servicesPage, new Gtk.Label({label: "Services" }))
@@ -56,8 +57,26 @@ const ServicesSystemdSettings = new GObject.Class({
             this._changedPermitted = true;
         }));
 
-        otherPage.attach(showAddLabel, 1, 2, 1, 1);
+        otherPage.attach(showAddLabel, 1, 1, 1, 1);
         otherPage.attach_next_to(this._showAddCheckbox, showAddLabel, 1, 1, 1);
+
+
+
+        let showRestartLabel = new Gtk.Label({
+                label:      "Show restart button: ",
+                xalign:     0,
+                hexpand:    true
+            });
+
+        this._showRestartCheckbox = new Gtk.Switch();
+        this._showRestartCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
+            this._changedPermitted = false;
+            this._settings.set_boolean('show-restart', button.active);
+            this._changedPermitted = true;
+        }));
+
+        otherPage.attach(showRestartLabel, 1, 2, 1, 1);
+        otherPage.attach_next_to(this._showRestartCheckbox, showRestartLabel, 1, 1, 1);
         /*****************************************************************************************/
 
 
@@ -326,6 +345,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
         this._store.clear();
         this._showAddCheckbox.set_active(this._settings.get_boolean('show-add'))
+        this._showRestartCheckbox.set_active(this._settings.get_boolean('show-restart'))
 
         let currentItems = this._settings.get_strv("systemd");
         let validItems = [ ];

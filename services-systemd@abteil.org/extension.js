@@ -59,7 +59,9 @@ const ServicesManager = new Lang.Class({
 			
 			let active = (stat == 0);
 
-			let serviceItem = new PopupServiceItem(service['name'], active);
+			let restartButton = this._settings.get_boolean('show-restart')
+
+			let serviceItem = new PopupServiceItem(service['name'], active, {'restartButton': restartButton});
             this.menu.addMenuItem(serviceItem);
 
 			serviceItem.connect('toggled', Lang.bind(this, function() {
@@ -67,11 +69,12 @@ const ServicesManager = new Lang.Class({
 					this._getCommand(service['service'], (active ? 'stop' : 'start'), service["type"]));
 			}));
 
-			serviceItem.refreshButton.connect('clicked', Lang.bind(this, function() {
-				GLib.spawn_command_line_async(
-					this._getCommand(service['service'], 'restart', service["type"]));
-				this.menu.close();
-			}));
+			if (serviceItem.restartButton)
+				serviceItem.restartButton.connect('clicked', Lang.bind(this, function() {
+					GLib.spawn_command_line_async(
+						this._getCommand(service['service'], 'restart', service["type"]));
+					this.menu.close();
+				}));
 		}));
 
 		if(this._settings.get_boolean('show-add')) {
