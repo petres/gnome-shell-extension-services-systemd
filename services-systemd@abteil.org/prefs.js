@@ -77,6 +77,42 @@ const ServicesSystemdSettings = new GObject.Class({
 
         otherPage.attach(showRestartLabel, 1, 2, 1, 1);
         otherPage.attach_next_to(this._showRestartCheckbox, showRestartLabel, 1, 1, 1);
+
+
+        let positionLabel = new Gtk.Label({
+                label:      "Position: ",
+                xalign:     0,
+                hexpand:    true
+            });
+
+        let model = new Gtk.ListStore();
+        model.set_column_types([GObject.TYPE_INT, GObject.TYPE_STRING]);
+
+        this._positionCombo = new Gtk.ComboBox({model: model});
+        this._positionCombo.get_style_context().add_class(Gtk.STYLE_CLASS_RAISED);
+        
+        let renderer = new Gtk.CellRendererText();
+        this._positionCombo.pack_start(renderer, true);
+        this._positionCombo.add_attribute(renderer, 'text', 1);
+
+        let positonsItems = [
+                { id: 0, name: "Panel" },
+                { id: 1, name: "Menu"}
+            ]
+        for (let i = 0; i < positonsItems.length; i++) {
+            let item = positonsItems[i];
+            let iter = model.append();
+            model.set(iter, [0, 1], [item.id, item.name]);
+        }
+
+        this._positionCombo.connect('changed', Lang.bind(this, function(entry) {
+            let [success, iter] = this._positionCombo.get_active_iter()
+            if (success)
+                this._settings.set_enum('position', this._positionCombo.get_model().get_value(iter, 0));
+        }));
+
+        otherPage.attach(positionLabel, 1, 3, 1, 1);
+        otherPage.attach_next_to(this._positionCombo, positionLabel, 1, 1, 1);
         /*****************************************************************************************/
 
 
@@ -346,6 +382,7 @@ const ServicesSystemdSettings = new GObject.Class({
         this._store.clear();
         this._showAddCheckbox.set_active(this._settings.get_boolean('show-add'))
         this._showRestartCheckbox.set_active(this._settings.get_boolean('show-restart'))
+        this._positionCombo.set_active(this._settings.get_enum('position'))
 
         let currentItems = this._settings.get_strv("systemd");
         let validItems = [ ];

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-shell-extensions-services-systemd">
+    <enum id='org.gnome.shell.extensions.services-systemd.positions'>
+        <value value='0' nick='panel'/>
+        <value value='1' nick='menu'/>
+    </enum>
     <schema path="/org/gnome/shell/extensions/services/" id="org.gnome.shell.extensions.services-systemd">
         <key type="as" name="systemd">
             <default>[ ]</default>
@@ -15,6 +19,10 @@
             <default>true</default>
             <summary>Show the restart button for each service</summary>
             <description>Whether to show the restart button for each service.</description>
+        </key>
+        <key name="position" enum="org.gnome.shell.extensions.services-systemd.positions">
+            <default>'panel'</default>
+            <summary>Where to display the extension indicator</summary>
         </key>
     </schema>
 </schemalist>

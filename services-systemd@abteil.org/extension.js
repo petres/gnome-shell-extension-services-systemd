@@ -12,102 +12,123 @@ const PopupServiceItem = Me.imports.popupServiceItem.PopupServiceItem;
 
 const ServicesManager = new Lang.Class({
     Name: 'ServicesManager',
-    Extends: PanelMenu.Button,
-
     _entries: [],
+    _containerType: -1,
 
-	_init: function() {
-		PanelMenu.Button.prototype._init.call(this, 0.0);
-		
-	    this._settings = Convenience.getSettings();
-	    this._settings.connect('changed', Lang.bind(this, this._loadConfig));
+    _init: function() {
+        this._settings = Convenience.getSettings();
+        this._settings.connect('changed', Lang.bind(this, this._loadConfig));
+        
+        this._createContainer();
+        this._loadConfig();
+        this._refresh();
+    },
+    _createContainer: function() {
+        this._containerType = this._settings.get_enum('position');
 
-	    this._loadConfig();
+        if (this._containerType == 0) {
+            this.container = new PanelMenu.Button()
+            PanelMenu.Button.prototype._init.call(this.container, 0.0);
+            
+            let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
+            let icon = new St.Icon({icon_name: 'system-run-symbolic', style_class: 'system-status-icon'});
+            hbox.add_child(icon);
 
-		let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
-		let icon = new St.Icon({icon_name: 'system-run-symbolic', style_class: 'system-status-icon'});
-		hbox.add_child(icon);
+            this.container.actor.add_actor(hbox);
+            this.container.actor.add_style_class_name('panel-status-button');
 
-		this.actor.add_actor(hbox);
-		this.actor.add_style_class_name('panel-status-button');
+            this.container.actor.connect('button-press-event', Lang.bind(this, function() {
+                this._refresh();
+            }));
+            Main.panel.addToStatusArea('servicesManager', this.container);;
+        } else {
+            this.container = new PopupMenu.PopupSubMenuMenuItem("Systemd Services", true);
+            this.container.icon.style_class = 'system-extensions-submenu-icon';
+            this.container.icon.icon_name = 'system-run-symbolic';
 
-		this.actor.connect('button-press-event', Lang.bind(this, function() {
-			this._refresh();
-		}));
+            Main.panel.statusArea.aggregateMenu.menu.addMenuItem(this.container, 8);
+        }
 
-		Main.panel.addToStatusArea('servicesManager', this);
-		
-		this._refresh();
-	},
-	_getCommand: function(service, action, type) {
-		let command = "systemctl"
+        this.container.actor.connect('button-press-event', Lang.bind(this, function() {
+            this._refresh();
+        }));
+    },
+    _getCommand: function(service, action, type) {
+        let command = "systemctl"
 
-		command += " " + action
-		command += " " + service
-		command += " --" + type
-		if (type == "system" && action != 'is-active')
-			command = "pkexec --user root " + command
+        command += " " + action
+        command += " " + service
+        command += " --" + type
+        if (type == "system" && action != 'is-active')
+            command = "pkexec --user root " + command
 
-		return 'sh -c "' + command + '; exit;"'
-	},
-	_refresh: function() {
-		this.menu.removeAll();
-		this._entries.forEach(Lang.bind(this, function(service) {
-			let active = false;
-			let [_, out, err, stat] = GLib.spawn_command_line_sync(
-				this._getCommand(service['service'], 'is-active', service["type"]));
-			
-			let active = (stat == 0);
+        return 'sh -c "' + command + '; exit;"'
+    },
+    _refresh: function() {
+        this.container.menu.removeAll();
+        this._entries.forEach(Lang.bind(this, function(service) {
+            let active = false;
+            let [_, out, err, stat] = GLib.spawn_command_line_sync(
+                this._getCommand(service['service'], 'is-active', service["type"]));
+            
+            let active = (stat == 0);
 
-			let restartButton = this._settings.get_boolean('show-restart')
+            let restartButton = this._settings.get_boolean('show-restart')
 
-			let serviceItem = new PopupServiceItem(service['name'], active, {'restartButton': restartButton});
-            this.menu.addMenuItem(serviceItem);
+            let serviceItem = new PopupServiceItem(service['name'], active, {'restartButton': restartButton});
+            this.container.menu.addMenuItem(serviceItem);
 
-			serviceItem.connect('toggled', Lang.bind(this, function() {
-				GLib.spawn_command_line_async(
-					this._getCommand(service['service'], (active ? 'stop' : 'start'), service["type"]));
-			}));
+            serviceItem.connect('toggled', Lang.bind(this, function() {
+                GLib.spawn_command_line_async(
+                    this._getCommand(service['service'], (active ? 'stop' : 'start'), service["type"]));
+            }));
 
-			if (serviceItem.restartButton)
-				serviceItem.restartButton.connect('clicked', Lang.bind(this, function() {
-					GLib.spawn_command_line_async(
-						this._getCommand(service['service'], 'restart', service["type"]));
-					this.menu.close();
-				}));
-		}));
-
-		if(this._settings.get_boolean('show-add')) {
-			if(this._entries.length > 0)
-		        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-	        
-	        let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
-	        item.connect('activate', Lang.bind(this, function() {
-		        Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
-		        this.menu.close();
-		    }));
-	        this.menu.addMenuItem(item);
+            if (serviceItem.restartButton)
+                serviceItem.restartButton.connect('clicked', Lang.bind(this, function() {
+                    GLib.spawn_command_line_async(
+                        this._getCommand(service['service'], 'restart', service["type"]));
+                    this.container.menu.close();
+                }));
+        }));
+        if(this._containerType == 0 && this._settings.get_boolean('show-add')) {
+            if(this._entries.length > 0)
+                this.container.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            
+            let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
+            item.connect('activate', Lang.bind(this, function() {
+                Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
+                this.container.menu.close();
+            }));
+            this.container.menu.addMenuItem(item);
         }
         return true;
-	},
+    },
     _loadConfig: function() {
+        if (this._containerType != this._settings.get_enum('position')) {
+            this.container.destroy();
+            this._createContainer();
+        }
+
         let entries = this._settings.get_strv("systemd");
         this._entries = []
         for (let i = 0; i < entries.length; i++) {
-	        let entry = JSON.parse(entries[i]);
-	        if (!("type" in entry))
-	        	entry["type"] = "system"
-	        this._entries.push(entry);
-	    }
+            let entry = JSON.parse(entries[i]);
+            if (!("type" in entry))
+                entry["type"] = "system"
+            this._entries.push(entry);
+        }
+    },
+    destroy: function() {
+        this.container.destroy();
     }
 });
 
 let serviceManager;
 
 function enable() {
-	serviceManager = new ServicesManager();
+    serviceManager = new ServicesManager();
 }
 
 function disable() {
-	serviceManager.destroy();
+    serviceManager.destroy();
 }
