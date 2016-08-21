@@ -107,8 +107,11 @@ const ServicesSystemdSettings = new GObject.Class({
 
         this._positionCombo.connect('changed', Lang.bind(this, function(entry) {
             let [success, iter] = this._positionCombo.get_active_iter()
-            if (success)
+            if (success) {
+                this._changedPermitted = false;
                 this._settings.set_enum('position', this._positionCombo.get_model().get_value(iter, 0));
+                this._changedPermitted = true;
+            }
         }));
 
         otherPage.attach(positionLabel, 1, 3, 1, 1);
@@ -197,20 +200,28 @@ const ServicesSystemdSettings = new GObject.Class({
         let labelService = new Gtk.Label({label: "Service: "});
         labelService.halign = 2;
 
-        this._availableSystemdServices = {
-            'system': this._getSystemdServicesList("system"),
-            'user': this._getSystemdServicesList("user"),
-        }
-        this._availableSystemdServices['all'] = this._availableSystemdServices['system'].concat(this._availableSystemdServices['user'])
-
         let sListStore = new Gtk.ListStore();
-        sListStore.set_column_types([GObject.TYPE_STRING, GObject.TYPE_INT]);
+        sListStore.set_column_types([GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING]);
 
-        for (let i in this._availableSystemdServices['all'])
-            sListStore.set (sListStore.append(), [0], [this._availableSystemdServices['all'][i]]);
+        let types = ['system', 'user']
+
+        this._availableSystemdServices = {
+            'all': []
+        }
+
+        for (let t in types) {
+            let type = types[t]
+            this._availableSystemdServices[type] = this._getSystemdServicesList(type)
+            this._availableSystemdServices['all'] = this._availableSystemdServices['all'].concat(this._availableSystemdServices[type])
+            for (let i in this._availableSystemdServices[type]) {
+                let name = this._availableSystemdServices[type][i] + " " + type
+                sListStore.set(sListStore.append(), [0, 1, 2], [name, this._availableSystemdServices[type][i], type]);
+            }
+        }
+
 
         this._systemName = new Gtk.Entry()
-        this._systemName.set_placeholder_text("Systemd service name");
+        this._systemName.set_placeholder_text("Systemd service name and type");
         let completion =  new Gtk.EntryCompletion()
         this._systemName.set_completion(completion)
         completion.set_model(sListStore)
@@ -269,12 +280,25 @@ const ServicesSystemdSettings = new GObject.Class({
         return JSON.stringify({"name": displayName, "service": serviceName, "type": type});
     },
     _add: function() {
-        let displayName = this._displayName.text
-        let serviceName = this._systemName.text
+        let displayName = this._displayName.text.trim()
+        let serviceEntry = this._systemName.text.trim()
+        log("----------------------------------")
+        if (displayName.length > 0 && serviceEntry.length > 0) {
+            let serviceArray = serviceEntry.split(" ")
+            let serviceName = ""
+            let type = ""
+            if (serviceArray.length > 1) {
+                serviceName = serviceArray[0]
+                type = serviceArray[1]
+            } else {
+                serviceName = serviceArray[0]
+                type = this._getTypeOfService(serviceName)
+            }
+            log("----------------------------------")
+            log(serviceName)
+            log(type)
 
-        if (displayName.trim().length > 0 && serviceName.trim().length > 0 ) {
-            let type = this._getTypeOfService(serviceName)
-            if (type == "undefined") {
+            if (!(type == "system" || type == "user") || this._availableSystemdServices[type].indexOf(serviceName) == -1) {
                 this._messageDialog = new Gtk.MessageDialog ({
                     title: "Warning",
                     modal: true,
@@ -393,7 +417,7 @@ const ServicesSystemdSettings = new GObject.Class({
             if (this._availableSystemdServices["all"].indexOf(entry["service"]) < 0)
                 continue;
 
-            // COMPABILITY
+            // COMPATIBILITY
             if(!("type" in entry))
                 entry["type"] = this._getTypeOfService(entry["service"])
 
