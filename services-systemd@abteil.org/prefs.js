@@ -219,7 +219,6 @@ const ServicesSystemdSettings = new GObject.Class({
             }
         }
 
-
         this._systemName = new Gtk.Entry()
         this._systemName.set_placeholder_text("Systemd service name and type");
         let completion =  new Gtk.EntryCompletion()
@@ -282,7 +281,6 @@ const ServicesSystemdSettings = new GObject.Class({
     _add: function() {
         let displayName = this._displayName.text.trim()
         let serviceEntry = this._systemName.text.trim()
-        log("----------------------------------")
         if (displayName.length > 0 && serviceEntry.length > 0) {
             let serviceArray = serviceEntry.split(" ")
             let serviceName = ""
@@ -294,9 +292,6 @@ const ServicesSystemdSettings = new GObject.Class({
                 serviceName = serviceArray[0]
                 type = this._getTypeOfService(serviceName)
             }
-            log("----------------------------------")
-            log(serviceName)
-            log(type)
 
             if (!(type == "system" || type == "user") || this._availableSystemdServices[type].indexOf(serviceName) == -1) {
                 this._messageDialog = new Gtk.MessageDialog ({
