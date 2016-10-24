@@ -278,6 +278,18 @@ const ServicesSystemdSettings = new GObject.Class({
         let type = this._store.get_value(iter, 2);
         return JSON.stringify({"name": displayName, "service": serviceName, "type": type});
     },
+    _isValidTemplateInstance: function(serviceName, type) {
+        // is this a possible template instance
+        let index = serviceName.indexOf("@");
+        let result = index != -1;
+
+        if (result) {
+            let templateName = serviceName.substr(0,index+1) + ".service";
+            // type is valid and template exists
+            result = result && (type == "system" || type == "user") && (this._availableSystemdServices[type].indexOf(templateName) != -1);
+        }
+        return result;
+    },
     _add: function() {
         let displayName = this._displayName.text.trim()
         let serviceEntry = this._systemName.text.trim()
@@ -293,7 +305,7 @@ const ServicesSystemdSettings = new GObject.Class({
                 type = this._getTypeOfService(serviceName)
             }
 
-            if (!(type == "system" || type == "user") || this._availableSystemdServices[type].indexOf(serviceName) == -1) {
+            if (!this._isValidTemplateInstance(serviceName, type) && ( !(type == "system" || type == "user") || this._availableSystemdServices[type].indexOf(serviceName) == -1)) {
                 this._messageDialog = new Gtk.MessageDialog ({
                     title: "Warning",
                     modal: true,
@@ -409,7 +421,7 @@ const ServicesSystemdSettings = new GObject.Class({
         for (let i = 0; i < currentItems.length; i++) {
             let entry = JSON.parse(currentItems[i]);
             // REMOVE NOT EXISTING ENTRIES
-            if (this._availableSystemdServices["all"].indexOf(entry["service"]) < 0)
+            if (!this._isValidTemplateInstance(entry["service"],entry["type"]) && (this._availableSystemdServices["all"].indexOf(entry["service"]) < 0))
                 continue;
 
             // COMPATIBILITY
