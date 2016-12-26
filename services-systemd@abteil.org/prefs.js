@@ -90,17 +90,17 @@ const ServicesSystemdSettings = new GObject.Class({
 
         this._positionCombo = new Gtk.ComboBox({model: model});
         this._positionCombo.get_style_context().add_class(Gtk.STYLE_CLASS_RAISED);
-        
+
         let renderer = new Gtk.CellRendererText();
         this._positionCombo.pack_start(renderer, true);
         this._positionCombo.add_attribute(renderer, 'text', 1);
 
-        let positonsItems = [
+        let positionsItems = [
                 { id: 0, name: "Panel" },
                 { id: 1, name: "Menu"}
             ]
-        for (let i = 0; i < positonsItems.length; i++) {
-            let item = positonsItems[i];
+        for (let i = 0; i < positionsItems.length; i++) {
+            let item = positionsItems[i];
             let iter = model.append();
             model.set(iter, [0, 1], [item.id, item.name]);
         }
@@ -116,6 +116,45 @@ const ServicesSystemdSettings = new GObject.Class({
 
         otherPage.attach(positionLabel, 1, 3, 1, 1);
         otherPage.attach_next_to(this._positionCombo, positionLabel, 1, 1, 1);
+
+
+        let commandMethodLabel = new Gtk.Label({
+                label:      "Command Method: ",
+                xalign:     0,
+                hexpand:    true
+            });
+
+        let commandMethodModel = new Gtk.ListStore();
+        commandMethodModel.set_column_types([GObject.TYPE_INT, GObject.TYPE_STRING]);
+
+        this._commandMethodCombo = new Gtk.ComboBox({model: commandMethodModel});
+        this._commandMethodCombo.get_style_context().add_class(Gtk.STYLE_CLASS_RAISED);
+
+        let commandMethodRenderer = new Gtk.CellRendererText();
+        this._commandMethodCombo.pack_start(commandMethodRenderer, true);
+        this._commandMethodCombo.add_attribute(commandMethodRenderer, 'text', 1);
+
+        let commandMethodsItems = [
+                { id: 0, name: "pkexec" },
+                { id: 1, name: "systemctl"}
+            ]
+        for (let i = 0; i < commandMethodsItems.length; i++) {
+            let item = commandMethodsItems[i];
+            let iter = commandMethodModel.append();
+            commandMethodModel.set(iter, [0, 1], [item.id, item.name]);
+        }
+
+        this._commandMethodCombo.connect('changed', Lang.bind(this, function(entry) {
+            let [success, iter] = this._commandMethodCombo.get_active_iter()
+            if (success) {
+                this._changedPermitted = false;
+                this._settings.set_enum('command-method', this._commandMethodCombo.get_model().get_value(iter, 0));
+                this._changedPermitted = true;
+            }
+        }));
+
+        otherPage.attach(commandMethodLabel, 1, 4, 1, 1);
+        otherPage.attach_next_to(this._commandMethodCombo, commandMethodLabel, 1, 1, 1);
         /*****************************************************************************************/
 
 
@@ -134,7 +173,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
         this._treeView = new Gtk.TreeView({ model: this._store,
                                             hexpand: true, vexpand: true });
-        
+
         let selection = this._treeView.get_selection();
         selection.set_mode(Gtk.SelectionMode.SINGLE);
         selection.connect ('changed', Lang.bind (this, this._onSelectionChanged));
@@ -150,7 +189,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
         let appColumn = new Gtk.TreeViewColumn({ expand: true,
                                                  title: "Service" });
-        
+
         let nameRenderer = new Gtk.CellRendererText;
         appColumn.pack_start(nameRenderer, true);
         appColumn.add_attribute(nameRenderer, "text", 1);
@@ -158,7 +197,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
         let appColumn = new Gtk.TreeViewColumn({ expand: true,
                                                  title: "Type" });
-        
+
         let nameRenderer = new Gtk.CellRendererText;
         appColumn.pack_start(nameRenderer, true);
         appColumn.add_attribute(nameRenderer, "text", 2);
@@ -226,7 +265,7 @@ const ServicesSystemdSettings = new GObject.Class({
         completion.set_model(sListStore)
 
         completion.set_text_column(0)
-        
+
         grid.attach(labelName, 1, 1, 1, 1);
         grid.attach_next_to(this._displayName, labelName, 1, 1, 1);
 
@@ -248,7 +287,7 @@ const ServicesSystemdSettings = new GObject.Class({
         toolbar.add(addButton);
         /*****************************************************************************************/
 
-        
+
 
         this._changedPermitted = true;
         this._refresh();
@@ -311,7 +350,7 @@ const ServicesSystemdSettings = new GObject.Class({
                     modal: true,
                     buttons: Gtk.ButtonsType.OK,
                     message_type: Gtk.MessageType.WARNING,
-                    text: "Service does not exist." 
+                    text: "Service does not exist."
                 });
                 this._messageDialog.connect('response', Lang.bind(this, function() {
                     this._messageDialog.close();
@@ -331,15 +370,15 @@ const ServicesSystemdSettings = new GObject.Class({
                 this._displayName.text = ""
                 this._systemName.text = ""
             }
-            
+
         } else {
             this._messageDialog = new Gtk.MessageDialog ({
-                //parent: this.get_toplevel(), 
+                //parent: this.get_toplevel(),
                 title: "Warning",
                 modal: true,
                 buttons: Gtk.ButtonsType.OK,
                 message_type: Gtk.MessageType.WARNING,
-                text: "No label and/or service specified." 
+                text: "No label and/or service specified."
             });
 
             this._messageDialog.connect ('response', Lang.bind(this, function() {
@@ -367,7 +406,7 @@ const ServicesSystemdSettings = new GObject.Class({
     _move: function(oldIndex, newIndex) {
         let currentItems = this._settings.get_strv("systemd");
 
-        if (oldIndex < 0 || oldIndex >= currentItems.length ||  
+        if (oldIndex < 0 || oldIndex >= currentItems.length ||
             newIndex < 0 || newIndex >= currentItems.length)
             return;
 
@@ -376,7 +415,7 @@ const ServicesSystemdSettings = new GObject.Class({
         this._settings.set_strv("systemd", currentItems);
 
         this._treeView.get_selection().unselect_all();
-        this._treeView.get_selection().select_path(Gtk.TreePath.new_from_string(String(newIndex))); 
+        this._treeView.get_selection().select_path(Gtk.TreePath.new_from_string(String(newIndex)));
     },
     _delete: function() {
         let [any, model, iter] = this._treeView.get_selection().get_selected();
@@ -390,7 +429,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
             currentItems.splice(index, 1);
             this._settings.set_strv("systemd", currentItems);
-            
+
             this._store.remove(iter);
         }
     },
@@ -404,7 +443,7 @@ const ServicesSystemdSettings = new GObject.Class({
             this._selDepButtons.forEach(function(value) {
                 value.set_sensitive(false)
             });
-        } 
+        }
     },
     _refresh: function() {
         if (!this._changedPermitted)

@@ -18,7 +18,7 @@ const ServicesManager = new Lang.Class({
     _init: function() {
         this._settings = Convenience.getSettings();
         this._settings.connect('changed', Lang.bind(this, this._loadConfig));
-        
+
         this._createContainer();
         this._loadConfig();
         this._refresh();
@@ -29,7 +29,7 @@ const ServicesManager = new Lang.Class({
         if (this._containerType == 0) {
             this.container = new PanelMenu.Button()
             PanelMenu.Button.prototype._init.call(this.container, 0.0);
-            
+
             let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
             let icon = new St.Icon({icon_name: 'system-run-symbolic', style_class: 'system-status-icon'});
             hbox.add_child(icon);
@@ -60,6 +60,7 @@ const ServicesManager = new Lang.Class({
         command += " " + service
         command += " --" + type
         if (type == "system" && action != 'is-active')
+          if (this._settings.get_enum("command-method") == 0 )
             command = "pkexec --user root " + command
 
         return 'sh -c "' + command + '; exit;"'
@@ -70,7 +71,7 @@ const ServicesManager = new Lang.Class({
             let active = false;
             let [_, out, err, stat] = GLib.spawn_command_line_sync(
                 this._getCommand(service['service'], 'is-active', service["type"]));
-            
+
             let active = (stat == 0);
 
             let restartButton = this._settings.get_boolean('show-restart')
@@ -93,7 +94,7 @@ const ServicesManager = new Lang.Class({
         if(this._containerType == 0 && this._settings.get_boolean('show-add')) {
             if(this._entries.length > 0)
                 this.container.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            
+
             let item = new PopupMenu.PopupMenuItem(_("Add systemd services ..."));
             item.connect('activate', Lang.bind(this, function() {
                 Util.spawn(["gnome-shell-extension-prefs", "services-systemd@abteil.org"]);
