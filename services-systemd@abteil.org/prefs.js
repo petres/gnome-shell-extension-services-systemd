@@ -179,29 +179,29 @@ const ServicesSystemdSettings = new GObject.Class({
         selection.connect ('changed', Lang.bind (this, this._onSelectionChanged));
 
 
-        let appColumn = new Gtk.TreeViewColumn({ expand: true,
+        let labelColumn = new Gtk.TreeViewColumn({ expand: true,
                                                  title: "Label" });
 
-        let nameRenderer = new Gtk.CellRendererText;
-        appColumn.pack_start(nameRenderer, true);
-        appColumn.add_attribute(nameRenderer, "text", 0);
-        this._treeView.append_column(appColumn);
+        let labelRenderer = new Gtk.CellRendererText;
+        labelColumn.pack_start(labelRenderer, true);
+        labelColumn.add_attribute(labelRenderer, "text", 0);
+        this._treeView.append_column(labelColumn);
 
-        let appColumn = new Gtk.TreeViewColumn({ expand: true,
+        let serviceColumn = new Gtk.TreeViewColumn({ expand: true,
                                                  title: "Service" });
 
-        let nameRenderer = new Gtk.CellRendererText;
-        appColumn.pack_start(nameRenderer, true);
-        appColumn.add_attribute(nameRenderer, "text", 1);
-        this._treeView.append_column(appColumn);
+        let serviceRenderer = new Gtk.CellRendererText;
+        serviceColumn.pack_start(serviceRenderer, true);
+        serviceColumn.add_attribute(serviceRenderer, "text", 1);
+        this._treeView.append_column(serviceColumn);
 
-        let appColumn = new Gtk.TreeViewColumn({ expand: true,
+        let typeColumn = new Gtk.TreeViewColumn({ expand: true,
                                                  title: "Type" });
 
-        let nameRenderer = new Gtk.CellRendererText;
-        appColumn.pack_start(nameRenderer, true);
-        appColumn.add_attribute(nameRenderer, "text", 2);
-        this._treeView.append_column(appColumn);
+        let typeRenderer = new Gtk.CellRendererText;
+        typeColumn.pack_start(typeRenderer, true);
+        typeColumn.add_attribute(typeRenderer, "text", 2);
+        this._treeView.append_column(typeColumn);
 
         servicesPage.add(this._treeView);
 
@@ -274,17 +274,17 @@ const ServicesSystemdSettings = new GObject.Class({
 
         servicesPage.add(grid);
 
-        let toolbar = new Gtk.Toolbar();
-        toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
-        toolbar.halign = 2;
-        servicesPage.add(toolbar);
+        let addToolbar = new Gtk.Toolbar();
+        addToolbar.get_style_context().add_class(Gtk.STYLE_CLASS_INLINE_TOOLBAR);
+        addToolbar.halign = 2;
+        servicesPage.add(addToolbar);
 
         let addButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_ADD,
                                              label: "Add",
                                              is_important: true });
 
         addButton.connect('clicked', Lang.bind(this, this._add));
-        toolbar.add(addButton);
+        addToolbar.add(addButton);
         /*****************************************************************************************/
 
 
@@ -294,10 +294,10 @@ const ServicesSystemdSettings = new GObject.Class({
         this._onSelectionChanged();
     },
     _getSystemdServicesList: function(type) {
-        let [_, out, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-unit-files --type=service,timer --no-legend | awk \'{print $1}\'"');
-        let allFiltered = out.toString().split("\n");
-        let [_, out2, err, stat] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-units --type=service,timer --no-legend | awk \'{print $1}\'"');
-        allFiltered = allFiltered.concat(out2.toString().split("\n"));
+        let [_u1, out_u1, err_u1, stat_u1] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-unit-files --type=service,timer --no-legend | awk \'{print $1}\'"');
+        let allFiltered = out_u1.toString().split("\n");
+        let [_u2, out_u2, err_u2, stat_u2] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-units --type=service,timer --no-legend | awk \'{print $1}\'"');
+        allFiltered = allFiltered.concat(out_u2.toString().split("\n"));
         return allFiltered.sort(
             function (a, b) {
                 return a.toLowerCase().localeCompare(b.toLowerCase());

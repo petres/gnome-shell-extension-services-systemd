@@ -72,7 +72,7 @@ const ServicesManager = new Lang.Class({
             let [_, out, err, stat] = GLib.spawn_command_line_sync(
                 this._getCommand(service['service'], 'is-active', service["type"]));
 
-            let active = (stat == 0);
+            active = (stat == 0);
 
             let restartButton = this._settings.get_boolean('show-restart')
 
