@@ -43,7 +43,7 @@ const ServicesManager = new Lang.Class({
             Main.panel.addToStatusArea('servicesManager', this.container);;
         } else {
             this.container = new PopupMenu.PopupSubMenuMenuItem("Systemd Services", true);
-            this.container.icon.style_class = 'system-extensions-submenu-icon';
+            //this.container.icon.style_class = 'system-extensions-submenu-icon';
             this.container.icon.icon_name = 'system-run-symbolic';
 
             Main.panel.statusArea.aggregateMenu.menu.addMenuItem(this.container, 8);
