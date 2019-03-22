@@ -27,8 +27,7 @@ const ServicesManager = new Lang.Class({
         this._containerType = this._settings.get_enum('position');
 
         if (this._containerType == 0) {
-            this.container = new PanelMenu.Button()
-            PanelMenu.Button.prototype._init.call(this.container, 0.0);
+            this.container = new PanelMenu.Button(0.0);
 
             let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
             let icon = new St.Icon({icon_name: 'system-run-symbolic', style_class: 'system-status-icon'});
@@ -40,7 +39,7 @@ const ServicesManager = new Lang.Class({
             this.container.actor.connect('button-press-event', Lang.bind(this, function() {
                 this._refresh();
             }));
-            Main.panel.addToStatusArea('servicesManager', this.container);;
+            Main.panel.addToStatusArea('servicesManager', this.container);
         } else {
             this.container = new PopupMenu.PopupSubMenuMenuItem("Systemd Services", true);
             //this.container.icon.style_class = 'system-extensions-submenu-icon';
