@@ -5,10 +5,12 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
+
 const Util = imports.misc.util;
-const PopupServiceItem = Me.imports.popupServiceItem.PopupServiceItem;
+
+const Me = ExtensionUtils.getCurrentExtension();
+//const ScrollablePopupMenu = Me.imports.scrollablePopupMenu.ScrollablePopupMenu;
+var PopupServiceItem = Me.imports.popupServiceItem.PopupServiceItem;
 
 const ServicesManager = new Lang.Class({
     Name: 'ServicesManager',
@@ -16,7 +18,7 @@ const ServicesManager = new Lang.Class({
     _containerType: -1,
 
     _init: function() {
-        this._settings = Convenience.getSettings();
+        this._settings = ExtensionUtils.getSettings();
         this._settings.connect('changed', Lang.bind(this, this._loadConfig));
 
         this._createContainer();
@@ -33,10 +35,10 @@ const ServicesManager = new Lang.Class({
             let icon = new St.Icon({icon_name: 'system-run-symbolic', style_class: 'system-status-icon'});
             hbox.add_child(icon);
 
-            this.container.actor.add_actor(hbox);
-            this.container.actor.add_style_class_name('panel-status-button');
+            this.container.add_actor(hbox);
+            this.container.add_style_class_name('panel-status-button');
 
-            this.container.actor.connect('button-press-event', Lang.bind(this, function() {
+            this.container.connect('button-press-event', Lang.bind(this, function() {
                 this._refresh();
             }));
             Main.panel.addToStatusArea('servicesManager', this.container);
@@ -48,7 +50,7 @@ const ServicesManager = new Lang.Class({
             Main.panel.statusArea.aggregateMenu.menu.addMenuItem(this.container, 8);
         }
 
-        this.container.actor.connect('button-press-event', Lang.bind(this, function() {
+        this.container.connect('button-press-event', Lang.bind(this, function() {
             this._refresh();
         }));
     },

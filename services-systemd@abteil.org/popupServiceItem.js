@@ -1,16 +1,15 @@
 const Lang = imports.lang;
 const PopupMenu = imports.ui.popupMenu;
-const St = imports.gi.St;
-const Clutter = imports.gi.Clutter;
 const Util = imports.misc.util;
-const Gtk = imports.gi.Gtk;
+const { GObject, Gtk, St, Clutter} = imports.gi;
 
 const ExtensionSystem = imports.ui.extensionSystem;
 const ExtensionUtils = imports.misc.extensionUtils;
 
+var PopupServiceItem = GObject.registerClass(
 class PopupServiceItem extends PopupMenu.PopupSwitchMenuItem {
-    constructor(text, active, params) {
-        super(text, active);
+    _init(text, active, params) {
+        super._init(text, active);
 
         if (params.restartButton) {
             this.restartButton = new St.Button({
@@ -23,7 +22,7 @@ class PopupServiceItem extends PopupMenu.PopupSwitchMenuItem {
             });
 
             this.restartButton.child = new St.Icon({ icon_name: 'view-refresh-symbolic' });
-            this.actor.add(this.restartButton, { expand: false, x_align: St.Align.END });
+            this.add(this.restartButton, { expand: false, x_align: St.Align.END });
         }
     }
-}
+});
