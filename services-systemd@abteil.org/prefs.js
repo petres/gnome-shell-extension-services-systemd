@@ -6,7 +6,6 @@ const Lang = imports.lang;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
 
 
 const ServicesSystemdSettings = new GObject.Class({
@@ -15,7 +14,7 @@ const ServicesSystemdSettings = new GObject.Class({
 
     _init : function(params) {
         /*** Open Settings ***********************************************************************/
-        this._settings = Convenience.getSettings();
+        this._settings = ExtensionUtils.getSettings();
         this._settings.connect('changed', Lang.bind(this, this._refresh));
 
         this._changedPermitted = false;
