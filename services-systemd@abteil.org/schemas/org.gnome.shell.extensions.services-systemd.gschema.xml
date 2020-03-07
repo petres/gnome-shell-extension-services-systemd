@@ -7,6 +7,7 @@
     <enum id='org.gnome.shell.extensions.services-systemd.command-methods'>
         <value value='0' nick='pkexec'/>
         <value value='1' nick='systemctl'/>
+        <value value='2' nick='sudo'/>
     </enum>
     <schema path="/org/gnome/shell/extensions/services/" id="org.gnome.shell.extensions.services-systemd">
         <key type="as" name="systemd">

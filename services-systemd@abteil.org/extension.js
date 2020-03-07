@@ -60,9 +60,13 @@ const ServicesManager = new Lang.Class({
         command += " " + action
         command += " " + service
         command += " --" + type
-        if (type == "system" && action != 'is-active')
-          if (this._settings.get_enum("command-method") == 0 )
-            command = "pkexec --user root " + command
+        if (type == "system" && action != 'is-active') {
+            if (this._settings.get_enum("command-method") == 0) {
+                command = "pkexec --user root " + command
+            } else if (this._settings.get_enum("command-method") == 2) {
+                command = "sudo " + command
+            }
+        }
 
         return 'sh -c "' + command + '; exit;"'
     },

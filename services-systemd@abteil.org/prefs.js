@@ -3,6 +3,7 @@ const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const GObject = imports.gi.GObject;
 const Lang = imports.lang;
+const ByteArray = imports.byteArray.ByteArray;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
@@ -36,20 +37,22 @@ const ServicesSystemdSettings = new GObject.Class({
         otherPage.set_row_spacing(10);
 
         //this.insert_page(servicesPage, new Gtk.Label("test"), 0)
-        this.append_page(servicesPage, new Gtk.Label({label: "Services" }))
-        this.append_page(otherPage, new Gtk.Label({label: "Other" }))
+        this.append_page(servicesPage, new Gtk.Label({ label: "Services" }))
+        this.append_page(otherPage, new Gtk.Label({ label: "Other" }))
         /*****************************************************************************************/
 
 
 
         /*** GUI: Other Settings *****************************************************************/
         let showAddLabel = new Gtk.Label({
-                label:      "Show add services: ",
-                xalign:     0,
-                hexpand:    true
-            });
+            label:      "Show add services: ",
+            xalign:     0,
+            hexpand:    true
+        });
 
         this._showAddCheckbox = new Gtk.Switch();
+        this._showAddCheckbox.set_halign(Gtk.Align.CENTER);
+        this._showAddCheckbox.set_valign(Gtk.Align.CENTER);
         this._showAddCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
             this._changedPermitted = false;
             this._settings.set_boolean('show-add', button.active);
@@ -62,12 +65,14 @@ const ServicesSystemdSettings = new GObject.Class({
 
 
         let showRestartLabel = new Gtk.Label({
-                label:      "Show restart button: ",
-                xalign:     0,
-                hexpand:    true
-            });
+            label:      "Show restart button: ",
+            xalign:     0,
+            hexpand:    true
+        });
 
         this._showRestartCheckbox = new Gtk.Switch();
+        this._showRestartCheckbox.set_halign(Gtk.Align.CENTER);
+        this._showRestartCheckbox.set_valign(Gtk.Align.CENTER);
         this._showRestartCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
             this._changedPermitted = false;
             this._settings.set_boolean('show-restart', button.active);
@@ -79,10 +84,10 @@ const ServicesSystemdSettings = new GObject.Class({
 
 
         let positionLabel = new Gtk.Label({
-                label:      "Position: ",
-                xalign:     0,
-                hexpand:    true
-            });
+            label:      "Position: ",
+            xalign:     0,
+            hexpand:    true
+        });
 
         let model = new Gtk.ListStore();
         model.set_column_types([GObject.TYPE_INT, GObject.TYPE_STRING]);
@@ -95,9 +100,9 @@ const ServicesSystemdSettings = new GObject.Class({
         this._positionCombo.add_attribute(renderer, 'text', 1);
 
         let positionsItems = [
-                { id: 0, name: "Panel" },
-                { id: 1, name: "Menu"}
-            ]
+            { id: 0, name: "Panel"},
+            { id: 1, name: "Menu"}
+        ]
         for (let i = 0; i < positionsItems.length; i++) {
             let item = positionsItems[i];
             let iter = model.append();
@@ -134,9 +139,11 @@ const ServicesSystemdSettings = new GObject.Class({
         this._commandMethodCombo.add_attribute(commandMethodRenderer, 'text', 1);
 
         let commandMethodsItems = [
-                { id: 0, name: "pkexec" },
-                { id: 1, name: "systemctl"}
-            ]
+            { id: 0, name: "pkexec" },
+            { id: 1, name: "systemctl"},
+            { id: 2, name: "sudo"}
+        ]
+
         for (let i = 0; i < commandMethodsItems.length; i++) {
             let item = commandMethodsItems[i];
             let iter = commandMethodModel.append();
@@ -253,6 +260,7 @@ const ServicesSystemdSettings = new GObject.Class({
             this._availableSystemdServices['all'] = this._availableSystemdServices['all'].concat(this._availableSystemdServices[type])
             for (let i in this._availableSystemdServices[type]) {
                 let name = this._availableSystemdServices[type][i] + " " + type
+                log(name)
                 sListStore.set(sListStore.append(), [0, 1, 2], [name, this._availableSystemdServices[type][i], type]);
             }
         }
@@ -269,7 +277,7 @@ const ServicesSystemdSettings = new GObject.Class({
         grid.attach_next_to(this._displayName, labelName, 1, 1, 1);
 
         grid.attach(labelService, 1, 2, 1, 1);
-        grid.attach_next_to(this._systemName,labelService, 1, 1, 1);
+        grid.attach_next_to(this._systemName, labelService, 1, 1, 1);
 
         servicesPage.add(grid);
 
@@ -278,9 +286,11 @@ const ServicesSystemdSettings = new GObject.Class({
         addToolbar.halign = 2;
         servicesPage.add(addToolbar);
 
-        let addButton = new Gtk.ToolButton({ stock_id: Gtk.STOCK_ADD,
-                                             label: "Add",
-                                             is_important: true });
+        let addButton = new Gtk.ToolButton({
+            stock_id: Gtk.STOCK_ADD,
+            label: "Add",
+            is_important: true
+        });
 
         addButton.connect('clicked', Lang.bind(this, this._add));
         addToolbar.add(addButton);
@@ -295,8 +305,10 @@ const ServicesSystemdSettings = new GObject.Class({
     _getSystemdServicesList: function(type) {
         let [_u1, out_u1, err_u1, stat_u1] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-unit-files --type=service,timer --no-legend | awk \'{print $1}\'"');
         let allFiltered = out_u1.toString().split("\n");
+        //let allFiltered = ByteArray.toString(out_u1).split("\n");
         let [_u2, out_u2, err_u2, stat_u2] = GLib.spawn_command_line_sync('sh -c "systemctl --' + type + ' list-units --type=service,timer --no-legend | awk \'{print $1}\'"');
         allFiltered = allFiltered.concat(out_u2.toString().split("\n"));
+        //allFiltered = allFiltered.concat(ByteArray.toString(out_u2).split("\n"));
         return allFiltered.sort(
             function (a, b) {
                 return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -452,6 +464,7 @@ const ServicesSystemdSettings = new GObject.Class({
         this._showAddCheckbox.set_active(this._settings.get_boolean('show-add'))
         this._showRestartCheckbox.set_active(this._settings.get_boolean('show-restart'))
         this._positionCombo.set_active(this._settings.get_enum('position'))
+        this._commandMethodCombo.set_active(this._settings.get_enum('command-method'))
 
         let currentItems = this._settings.get_strv("systemd");
         let validItems = [ ];
@@ -469,9 +482,11 @@ const ServicesSystemdSettings = new GObject.Class({
             validItems.push(JSON.stringify(entry));
 
             let iter = this._store.append();
-            this._store.set(iter,
-                            [0, 1, 2],
-                            [entry["name"], entry["service"], entry["type"]]);
+            this._store.set(
+                iter,
+                [0, 1, 2],
+                [entry["name"], entry["service"], entry["type"]]
+            );
         }
 
         this._changedPermitted = false
