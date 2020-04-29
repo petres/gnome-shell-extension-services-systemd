@@ -55,31 +55,26 @@ const ServicesManager = new Lang.Class({
         }));
     },
     _getCommand: function(service, action, type) {
-        let command = "systemctl"
-
-        command += " " + action
-        command += " " + service
-        command += " --" + type
+        let command = `systemctl ${action} ${service} --${type}`
         if (type == "system" && action != 'is-active') {
             if (this._settings.get_enum("command-method") == 0) {
-                command = "pkexec --user root " + command
+                command = `pkexec --user root ${command}`
             } else if (this._settings.get_enum("command-method") == 2) {
-                command = "sudo " + command
+                command = `sudo ${command}`
             }
         }
-
-        return 'sh -c "' + command + '; exit;"'
+        return `sh -c "${command}; exit;"`
     },
     _refresh: function() {
         this.container.menu.removeAll();
+
+        let restartButton = this._settings.get_boolean('show-restart')
+
         this._entries.forEach(Lang.bind(this, function(service) {
             let active = false;
             let [_, out, err, stat] = GLib.spawn_command_line_sync(
                 this._getCommand(service['service'], 'is-active', service["type"]));
-
             active = (stat == 0);
-
-            let restartButton = this._settings.get_boolean('show-restart')
 
             let serviceItem = new PopupServiceItem(service['name'], active, {'restartButton': restartButton});
             this.container.menu.addMenuItem(serviceItem);
